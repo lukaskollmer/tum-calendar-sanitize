@@ -116,8 +116,7 @@ require('http').createServer((req, res) => {
       res.end(handleData(data));
     })
     .catch(err => {
-      console.log(`something went wrong :(`, err);
       res.statusCode = 500;
-      res.end('Internal Server Error');
+      res.end();
     });
 }).listen(process.env.PORT || 5000);
