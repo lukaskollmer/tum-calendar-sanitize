@@ -102,15 +102,15 @@ const handleData = data => {
 //
 
 require('http').createServer((req, res) => {
-  if (url.parse(req.url).pathname === '/') {
+  const query = url.parse(req.url, true).query;
+
+  // No parameters
+  if (Object.keys(query).length === 0) {
     res.writeHead(302, { 'Location': 'https://github.com/lukaskollmer/tum-calendar-sanitize' });
     res.end();
   }
-  const query = url.parse(req.url, true).query;
 
-  const tumOnlineUrl = `https://campus.tum.de/tumonlinej/ws/termin/ical?pStud=${query.pStud}&pToken=${query.pToken}`;
-
-  fetch(tumOnlineUrl)
+  fetch(`https://campus.tum.de/tumonlinej/ws/termin/ical?pStud=${query.pStud}&pToken=${query.pToken}`)
     .then(r => r.text())
     .then(data => {
       res.end(handleData(data));
