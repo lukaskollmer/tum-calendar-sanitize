@@ -58,6 +58,8 @@ const equals = (event1, event2) => {
 
 // Filter duplicates from a ical calendar
 const handleData = data => {
+  console.log('Handle calendar data');
+
   const cal = icalendar.parse_calendar(data);
 
   // sort all events by start date
@@ -108,6 +110,7 @@ require('http').createServer((req, res) => {
   if (Object.keys(query).length === 0) {
     res.writeHead(302, { 'Location': 'https://github.com/lukaskollmer/tum-calendar-sanitize' });
     res.end();
+    return;
   }
 
   fetch(`https://campus.tum.de/tumonlinej/ws/termin/ical?pStud=${query.pStud}&pToken=${query.pToken}`)
