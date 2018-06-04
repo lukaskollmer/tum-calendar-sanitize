@@ -24,7 +24,7 @@ _This is hosted on [zeit.co](https://zeit.co), but you can deploy your own insta
 
 Before / After
 
-![](https://s3.amazonaws.com/files.lukaskollmer.me/embed/tum-calendar-sanitize/combined.png)
+![](https://s3.amazonaws.com/lukaskollmer/embed/tum-calendar-sanitize/combined.png)
 
 
 ## License
