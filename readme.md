@@ -8,7 +8,7 @@
 
 ## Usage
 
-1. Fetch the url of your personal calendar in [CAMPUSonline](https://campus.tum.de/tumonline/wbKalender.wbPerson) (via the Publish button)
+1. Fetch the url of your personal calendar in [TUMonline](https://campus.tum.de/tumonline/wbKalender.wbPerson) (via the Publish button)
 2. Find the `pStud` and `pToken` parameters
 3. Fill them into the following url
 
