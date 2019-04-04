@@ -8,17 +8,11 @@
 
 ## Usage
 
-1. Fetch the url of your personal calendar in [TUMonline](https://campus.tum.de/tumonline/wbKalender.wbPerson) (via the Publish button)
-2. Find the `pStud` and `pToken` parameters
-3. Fill them into the following url
-
-```
-https://tum-calendar-sanitize.now.sh/?pStud=STUD_PARAM&pToken=TOKEN_PARAM
-```
-
+1. Create a [Google Cloud Function](https://cloud.google.com/functions/), using the implementation in [`main.js`](/main.js)
+2. Fetch your calendar's url from [TUMonline](https://campus.tum.de/tumonline/wbKalender.wbPerson) (via the publish button)
+3. Replace everything before the query parameters (`pStud` and `pToken`) with your cloud function's endpoint
 4. Subscribe to that url in your calendar app of choice
 
-_This is hosted on [zeit.co](https://zeit.co), but you can deploy your own instance to any serverless platform (like AWS Lambda)_
 
 ## Example
 
@@ -29,4 +23,4 @@ Before / After
 
 ## License
 
-MIT © [Lukas Kollmer](https://lukaskollmer.me)
+MIT @ [Lukas Kollmer](https://lukaskollmer.me)
