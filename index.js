@@ -1,125 +1,90 @@
-const url = require('url');
-const fetch = require('node-fetch');
+const IS_GOOGLE_CLOUD_FUNCTION = true;
+const TUM_ONLINE_CAL_API_ENDPOINT = 'https://campus.tum.de/tumonlinej/ws/termin/ical';
+
+const https = require('https');
 const icalendar = require('icalendar');
 
 
+const request = async (url) => {
+    return new Promise((resolve, reject) => {
+        const chunks = [];
+        https.get(url, res => {
+            res.on('data', data => chunks.push(data));
+            res.on('end', () => resolve(Buffer.concat(chunks)));
+            res.on('error', reject);
+        });
+    });
+};
 
-//
-// Helper functions
-//
 
-// lil' helper function to get a property value from an event
 const getProperty = (e, k) => e.getPropertyValue(k);
 
-// add fields from event2 to event1
-// This will be formatted: `${shorter_field} && ${longer_field}`
-const combineEvents = (event1, event2, fields) => {
-  fields.forEach(field => {
-    const value1 = getProperty(event1, field);
-    const value2 = getProperty(event2, field);
+const getName = e => getProperty(e, 'SUMMARY');
+const getStartDate = e => getProperty(e, 'DTSTART');
+const getEndDate = e => getProperty(e, 'DTEND');
+const getLocation = e => getProperty(e, 'LOCATION');
 
-    if (value1.length < value2.length) {
-      event1.setProperty(field, `${value1} && ${value2}`);
-    } else {
-      event1.setProperty(field, `${value2} && ${value1}`);
+
+const filterDuplicates = data => {
+    const cal = icalendar.parse_calendar(data);
+    const events = cal.events().sort((e1, e2) => getProperty(e1, 'DTSTART') - getProperty(e2, 'DTSTART'));
+
+    const filtered = [];
+
+    for (let i = 0; i < events.length; i++) {
+        const e = events[i];
+        const name  = getName(e);
+        const start = getStartDate(e).getTime();
+        const end   = getEndDate(e).getTime();
+
+        const duplicates = [];
+
+        while (i < events.length - 1) {
+            const e2 = events[i + 1];
+            if (name !== getName(e2) || start !== getStartDate(e2).getTime() || end !== getEndDate(e2).getTime()) break;
+            duplicates.push(e2);
+            i += 1;
+        }
+
+        if (duplicates.length > 0) {
+            const loc = duplicates.map(getLocation).concat(getLocation(e)).join('\n- ');
+            const desc = getProperty(e, 'DESCRIPTION') + '\n\nLocations: \n- ' + loc;
+            e.setProperty('LOCATION', null);
+            e.setProperty('DESCRIPTION', desc);
+        }
+        filtered.push(e);
     }
-  });
+
+    cal.components['VEVENT'] = filtered;
+    return cal.toString();
 };
 
-// Check if two events are equal, pased on the supplied fields
-const equals = (event1, event2) => {
-  // Comparing two events is a bit annoying since we can't just loop through the keys we want to compare
-  // The problem is that you can't compare two Dates with the === operator
-
-  // Check if the titles are equal
-  const titleEquals = getProperty(event1, 'SUMMARY') === getProperty(event2, 'SUMMARY');
-  if (!titleEquals) {
-    return false;
-  }
-
-  // Check if the start and end dates are equal
-  const dateFields = ['DTSTART', 'DTEND'];
-  for (var i = 0; i < dateFields.length; i++) {
-    const dateField = dateFields[i];
-    if (getProperty(event1, dateField).getTime() !== getProperty(event2, dateField).getTime()) {
-      return false;
+const main = async (req, res) => {
+    const {pStud, pToken} = req.query;
+    if (!pStud || !pToken) {
+        res.status(400).end('pStud or pToken missing!');
+        return;
     }
-  }
 
-  // We're only here if everything we compared was equal between the two events
-  return true;
-};
+    const url = `${TUM_ONLINE_CAL_API_ENDPOINT}?pStud=${pStud}&pToken=${pToken}`;
+    const buf = await request(url);
+    const cal = filterDuplicates(buf.toString());
 
-
-
-//
-// Calendar handling
-//
-
-// Filter duplicates from a ical calendar
-const handleData = data => {
-  console.log('Handle calendar data');
-
-  const cal = icalendar.parse_calendar(data);
-
-  // sort all events by start date
-  const events = cal.events().sort((e1, e2) => getProperty(e1, 'DTSTART') - getProperty(e2, 'DTSTART'));
-
-  // Array containing the indexes of all objects that are duplicates.
-  // This is used for two reasons:
-  // 1. to skip items we already identified as duplicates
-  // 2. to delete all duplicates from the list of items
-  let indexesToRemove = [];
-
-  events.forEach((event, index, events) => {
-    // Skip this for events we already identified as duplicates
-    if (indexesToRemove.includes(index)) { return; }
-
-    const nextEvent = events[index + 1];
-
-    if (nextEvent !== undefined) {
-      if (equals(event, nextEvent)) {
-        // register the index of the next event so that we can skip it
-        indexesToRemove.push(index + 1);
-
-        // add the LOCATION and DESCRIPTION fields from the second event
-        // (this is important to retain information like the secondary lecture hall)
-        combineEvents(event, nextEvent, ['LOCATION', 'DESCRIPTION']);
-      }
-    }
-  });
-
-  // Remove the items we identified as duplicates
-  // We need to reverse the array of indexes first to avoid removing the wrong items
-  indexesToRemove.reverse().forEach(i => events.splice(i, 1));
-  cal.components['VEVENT'] = events;
-
-  return cal.toString();
+    res.status(200);
+    res.setHeader('Content-Type', 'text/calendar; charset=UTF-8');
+    res.end(cal);
 };
 
 
 
-//
-// Server
-//
 
-require('http').createServer((req, res) => {
-  const query = url.parse(req.url, true).query;
+if (IS_GOOGLE_CLOUD_FUNCTION) {
+    exports.main = main;
+} else {
+    const express = require('express');
+    const app = express();
+    const port = 5000;
 
-  // No parameters
-  if (Object.keys(query).length === 0) {
-    res.writeHead(302, { 'Location': 'https://github.com/lukaskollmer/tum-calendar-sanitize' });
-    res.end();
-    return;
-  }
-
-  fetch(`https://campus.tum.de/tumonlinej/ws/termin/ical?pStud=${query.pStud}&pToken=${query.pToken}`)
-    .then(r => r.text())
-    .then(data => {
-      res.end(handleData(data));
-    })
-    .catch(err => {
-      res.statusCode = 500;
-      res.end();
-    });
-}).listen(process.env.PORT || 5000);
+    app.get('/', main);
+    app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+}

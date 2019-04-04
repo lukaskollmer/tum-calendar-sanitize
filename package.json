@@ -1,17 +1,12 @@
 {
   "name": "tum-calendar-sanitize",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Remove duplicates from your TUM calendar",
-  "main": "index.js",
   "repository": "https://github.com/lukaskollmer/tum-calendar-sanitize",
   "author": "Lukas Kollmer <lukas.kollmer@gmail.com>",
   "license": "MIT",
-  "private": false,
-  "scripts": {
-    "start": "node ./index.js"
-  },
   "dependencies": {
-    "icalendar": "^0.7.1",
-    "node-fetch": "^1.7.3"
+    "express": "^4.16.4",
+    "icalendar": "^0.7.1"
   }
 }
