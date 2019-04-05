@@ -2,8 +2,8 @@
 
 > Remove duplicates from your TUM calendar
 
-**Problem:** Lectures that are livestreamed to a separate lecture hall appear twice in your TUM calendar  
-**Solution:** Filter the duplicates and simply add the location of the second lecture hall to the original event
+**Problem:** Events that are held simultaneously in multiple lecture halls appear multiple times in your calendar
+**Solution:** Replace all duplicates with a single event listing all locations
 
 
 ## Usage
