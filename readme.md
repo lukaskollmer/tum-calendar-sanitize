@@ -2,7 +2,7 @@
 
 > Remove duplicates from your TUM calendar
 
-**Problem:** Events that are held simultaneously in multiple lecture halls appear multiple times in your calendar
+**Problem:** Events that are held simultaneously in multiple lecture halls appear multiple times in your calendar  
 **Solution:** Replace all duplicates with a single event listing all locations
 
 
