@@ -6,7 +6,8 @@
   "author": "Lukas Kollmer <lukas.kollmer@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.16.4",
+    "aws-serverless-express": "^3.3.6",
+    "express": "^4.17.1",
     "icalendar": "^0.7.1"
   }
 }

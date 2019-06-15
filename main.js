@@ -1,7 +1,9 @@
-const IS_GOOGLE_CLOUD_FUNCTION = true;
+const IS_AWS_ENVIRONMENT = typeof process.env.LAMBDA_TASK_ROOT === 'string';
 const TUM_ONLINE_CAL_API_ENDPOINT = 'https://campus.tum.de/tumonlinej/ws/termin/ical';
 
 const https = require('https');
+const express = require('express');
+const awsServerlessExpress = require('aws-serverless-express');
 const icalendar = require('icalendar');
 
 
@@ -59,7 +61,10 @@ const filterDuplicates = data => {
     return cal.toString();
 };
 
-const main = async (req, res) => {
+
+const app = express();
+
+app.get('/lk/tum-calendar-sanitize', async (req, res) => {
     const {pStud, pToken} = req.query;
     if (!pStud || !pToken) {
         res.status(400).end('pStud or pToken missing!');
@@ -73,18 +78,12 @@ const main = async (req, res) => {
     res.status(200);
     res.setHeader('Content-Type', 'text/calendar; charset=UTF-8');
     res.end(cal);
-};
+});
 
-
-
-
-if (IS_GOOGLE_CLOUD_FUNCTION) {
-    exports.main = main;
-} else {
-    const express = require('express');
-    const app = express();
+if (!IS_AWS_ENVIRONMENT) {
     const port = 5000;
-
-    app.get('/', main);
-    app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+    app.listen(port, () => console.log(`app listening on port ${port}!`));
+} else {
+    const server = awsServerlessExpress.createServer(app);
+    exports.handler = (event, context) => awsServerlessExpress.proxy(server, event, context);
 }
