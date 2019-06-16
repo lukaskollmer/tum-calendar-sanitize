@@ -85,5 +85,8 @@ if (!IS_AWS_ENVIRONMENT) {
     app.listen(port, () => console.log(`app listening on port ${port}!`));
 } else {
     const server = awsServerlessExpress.createServer(app);
-    exports.handler = (event, context) => awsServerlessExpress.proxy(server, event, context);
+    exports.handler = (event, context) => {
+        console.log(event);
+        return awsServerlessExpress.proxy(server, event, context);
+    };
 }
